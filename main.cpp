@@ -1,19 +1,8 @@
-/* 
- * File:   main.cpp
- * Author: zenja
- *
- * Created on October 30, 2011, 2:00 PM
- */
-
-#include <cstdlib>
-
+#include <iostream>
 using namespace std;
 
-/*
- * 
- */
 int main(int argc, char** argv) {
-
+    cout << "Test" << endl;
     return 0;
 }
 
