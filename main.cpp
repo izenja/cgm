@@ -8,10 +8,28 @@ using namespace std;
  * Fix point from jumping when object goes out of frame
  * Tune object detection */
 
+enum class Gesture {
+	None, Left, Right
+};
+
 int bufIndex = 0;
 static const int bufSize = 10;
 Vec2f centroidBuf[bufSize];
 bool bufFilled = false;
+Gesture gesture;
+
+bool dryRun = false;
+
+void execGesture(Gesture gesture) {
+	switch(gesture) {
+		case Gesture::Left:
+			cout << "Gesture: left" << endl;
+			break;
+		case Gesture::Right:
+			cout << "Gesture: right" << endl;
+			break;
+	}
+}
 
 Vec2f getObjCoords(Mat hsvFrame, bool* sufficientSize) {
 	Point pointSum;
@@ -41,8 +59,10 @@ int main(int argc, char** argv) {
 	// Extract command line arguments
 	bool useRecording = false;
 	if(argc > 1) {
-		if(!strcmp(argv[1], "-r"))
+		if(!strcmp(argv[1], "-r")) {
 			useRecording = true;
+			dryRun = true;
+		}
 	}
 	
 	// Create window
@@ -90,16 +110,19 @@ int main(int argc, char** argv) {
 		prevPoint = objCentroid;
 
 		// Analyze buffer to determine gesture
+		//TODO: Maybe remove 'triggered' and just use gesture
 		if(sufficientSize && prevSufficient && bufFilled) {
 			// Draw the motion vector for debugging purposes
 			line(frame, Point(objCentroid.val[0], objCentroid.val[1]), Point(motionVec.val[0]*3+objCentroid.val[0], motionVec.val[1]*3+objCentroid.val[1]), Scalar(1,1,1,1));
 			
 			Vec2f gestureVec = objCentroid - centroidBuf[(bufIndex-1 + bufSize-1) % bufSize];
 			if(gestureVec.val[0] > 20 && !triggered) {
-				cout << "Gesture: right" << endl;
+				//cout << "Gesture: right" << endl;
+				gesture = Gesture::Left;
 				triggered = true;
 			} else if(gestureVec.val[0] < -20 && !triggered) {
-				cout << "Gesture: left" << endl;
+				//cout << "Gesture: left" << endl;
+				gesture = Gesture::Right;
 				triggered = true;
 			} else if(gestureVec.val[0] < 5 && gestureVec.val[0] > -5 && triggered) {
 				triggered = false;
@@ -110,8 +133,10 @@ int main(int argc, char** argv) {
 		prevSufficient = sufficientSize;
 
 		// Execute gesture command
+		execGesture(gesture);
 
 		// Display frame
+		gesture = Gesture::None;
 		imshow("mainWin", frame);
 		if (waitKey(25) >= 0)
 			break;
