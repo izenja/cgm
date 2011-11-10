@@ -1,3 +1,15 @@
-cgm:
-	gcc -O2 -lopencv_core -lopencv_highgui main.cpp -o cgm
+CFLAGS=-O2
+LFLAGS=-O2 -lopencv_core -lopencv_highgui
+
+all: cgm
+
+main.o: main.cpp
+	gcc ${CFLAGS} -c main.cpp
+
+cgm: main.o
+	gcc ${LFLAGS} main.o -o cgm
+
+
+clean:
+	rm -f main.o cgm
 

@@ -85,13 +85,13 @@ int main(int argc, char** argv) {
 			line(hsvFrame, Point(interpPoint.val[0], interpPoint.val[1]), Point(motionVec.val[0]*3+interpPoint.val[0], motionVec.val[1]*3+interpPoint.val[1]), Scalar(1,1,1,1));
 			
 			Vec2f gestureVec = interpPoint - avgPos[(bufIndex-1 + avgPosBufSize-1) % avgPosBufSize];
-			if(gestureVec.val[0] > 15 && !triggered) {
+			if(gestureVec.val[0] > 20 && !triggered) {
 				cout << "Gesture: right" << endl;
 				triggered = true;
-			} else if(gestureVec.val[0] < -15 && !triggered) {
+			} else if(gestureVec.val[0] < -20 && !triggered) {
 				cout << "Gesture: left" << endl;
 				triggered = true;
-			} else if(gestureVec.val[0] < 5 || gestureVec.val[1] > -5 && triggered) {
+			} else if(gestureVec.val[0] < 5 && gestureVec.val[0] > -5 && triggered) {
 				triggered = false;
 			}
 		} else {
@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
 
 		// Display frame
 		imshow("mainWin", hsvFrame);
-		if (waitKey(1) >= 0)
+		if (waitKey(25) >= 0)
 			break;
 	}
 
