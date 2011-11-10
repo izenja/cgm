@@ -9,11 +9,11 @@ using namespace std;
  * Tune object detection */
 
 int bufIndex = 0;
-static const int avgPosBufSize = 10;
-Vec2f avgPos[avgPosBufSize];
+static const int bufSize = 10;
+Vec2f centroidBuf[bufSize];
 bool bufFilled = false;
 
-Vec2f getObjCoords(Mat hsvFrame, bool& sufficientSize) {
+Vec2f getObjCoords(Mat hsvFrame, bool* sufficientSize) {
 	Point pointSum;
 	int numMatched = 0;
 	
@@ -28,21 +28,34 @@ Vec2f getObjCoords(Mat hsvFrame, bool& sufficientSize) {
 		}
 	}
 	
-	if(numMatched < 1250)
-		sufficientSize = false;
-	else
-		sufficientSize = true;
+	if(sufficientSize != nullptr) {
+		if(numMatched < 1250)
+			*sufficientSize = false;
+		else
+			*sufficientSize = true;
+	}
 	return Vec2f(pointSum.x / (float)numMatched, pointSum.y / (float)numMatched);
 }
 
 int main(int argc, char** argv) {
+	// Extract command line arguments
+	bool useRecording = false;
+	if(argc > 1) {
+		if(!strcmp(argv[1], "-r"))
+			useRecording = true;
+	}
+	
 	// Create window
 	namedWindow("mainWin", 1);
 
 	// Open camera
-	VideoCapture cap("vid.mp4");
+	VideoCapture cap;
+	if(useRecording)
+		cap.open("vid.mp4");
+	else
+		cap.open(0);
 	if (!cap.isOpened()) {
-		cerr << "Error: failed to open camera." << endl;
+		cerr << "Error: failed to open input stream." << endl;
 		return 1;
 	}
 
@@ -55,7 +68,7 @@ int main(int argc, char** argv) {
 		// Grab a frame
 		cap >> frame;
 		if(frame.total() == 0) {
-			cout << "End of video reached." << endl;
+			cout << "End of input stream reached." << endl;
 			break;
 		}
 
@@ -64,27 +77,24 @@ int main(int argc, char** argv) {
 
 		// Go through image and find average coordinate of desired hue
 		bool sufficientSize;
-		Vec2f avgPoint = getObjCoords(hsvFrame, sufficientSize);
-		avgPos[bufIndex] = avgPoint;
+		Vec2f objCentroid = getObjCoords(hsvFrame, &sufficientSize);
+		centroidBuf[bufIndex] = objCentroid;
 		bufIndex++;
-		if(bufIndex >= avgPosBufSize) {
-			bufIndex -= avgPosBufSize;
+		if(bufIndex >= bufSize) {
+			bufIndex -= bufSize;
 			bufFilled = true;
 		}
 
-		// Smooth movement and find vector
-		//Vec2f interpPoint = (avgPoint+prevPoint)*0.5f;
-		Vec2f interpPoint = avgPoint;
-		Vec2f motionVec = interpPoint - prevPoint;
-		prevPoint = interpPoint;
-		prevSufficient = sufficientSize;
+		// Find vector
+		Vec2f motionVec = objCentroid - prevPoint;
+		prevPoint = objCentroid;
 
 		// Analyze buffer to determine gesture
 		if(sufficientSize && prevSufficient && bufFilled) {
 			// Draw the motion vector for debugging purposes
-			line(hsvFrame, Point(interpPoint.val[0], interpPoint.val[1]), Point(motionVec.val[0]*3+interpPoint.val[0], motionVec.val[1]*3+interpPoint.val[1]), Scalar(1,1,1,1));
+			line(frame, Point(objCentroid.val[0], objCentroid.val[1]), Point(motionVec.val[0]*3+objCentroid.val[0], motionVec.val[1]*3+objCentroid.val[1]), Scalar(1,1,1,1));
 			
-			Vec2f gestureVec = interpPoint - avgPos[(bufIndex-1 + avgPosBufSize-1) % avgPosBufSize];
+			Vec2f gestureVec = objCentroid - centroidBuf[(bufIndex-1 + bufSize-1) % bufSize];
 			if(gestureVec.val[0] > 20 && !triggered) {
 				cout << "Gesture: right" << endl;
 				triggered = true;
@@ -97,11 +107,12 @@ int main(int argc, char** argv) {
 		} else {
 			triggered = false;
 		}
+		prevSufficient = sufficientSize;
 
 		// Execute gesture command
 
 		// Display frame
-		imshow("mainWin", hsvFrame);
+		imshow("mainWin", frame);
 		if (waitKey(25) >= 0)
 			break;
 	}
