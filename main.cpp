@@ -10,11 +10,20 @@ using namespace std;
 #include "FrameBuffer.h"
 
 /* TODO:
- * - add dry run and show window command line options
  */
 
 bool dryRun = false;
 bool noAnalysis = false;
+const string configFile("gestureConfig");
+
+// Tuning parameters
+const int hueMin = 5;
+const int hueMax = 20;
+const int satMin = 200;
+const int valMin = 75;
+const int horizVelMin = 80;
+const int resetVelMax = 40;
+const int objMinPixels = 1250;
 
 void execGesture(GestureMap gestureMap, Gesture gesture) {
 	if(gesture == Gesture::None)
@@ -38,7 +47,7 @@ Vec2f getObjCoords(Mat hsvFrame, bool* sufficientSize) {
 		int hue = (*it)[0];
 		int saturation = (*it)[1];
 		int value = (*it)[2];
-		if (hue >= 0 && hue <= 20 && saturation > 200 && value > 32) {
+		if (hue >= hueMin && hue <= hueMax && saturation >= satMin && value >= valMin) {
 			// Pixel is within desired hue range and minimum saturation
 			pointSum += it.pos();
 			numMatched++;
@@ -46,7 +55,7 @@ Vec2f getObjCoords(Mat hsvFrame, bool* sufficientSize) {
 	}
 	
 	if(sufficientSize != nullptr) {
-		if(numMatched < 1250)
+		if(numMatched < objMinPixels)
 			*sufficientSize = false;
 		else
 			*sufficientSize = true;
@@ -57,11 +66,11 @@ Vec2f getObjCoords(Mat hsvFrame, bool* sufficientSize) {
 Gesture extractGesture(FrameBuffer frameBuf) {
 	Gesture gesture;
 	Vec2f gestureVec = frameBuf.getCurrent() - frameBuf.getOldest();
-	if(gestureVec.val[0] > 20) {
+	if(gestureVec.val[0] > horizVelMin) {
 		gesture = Gesture::Left;
-	} else if(gestureVec.val[0] < -20) {
+	} else if(gestureVec.val[0] < -horizVelMin) {
 		gesture = Gesture::Right;
-	} else if(gestureVec.val[0] < 5 && gestureVec.val[0] > -5) {
+	} else if(gestureVec.val[0] < resetVelMax && gestureVec.val[0] > -resetVelMax) {
 		gesture = Gesture::None;
 	}
 	
@@ -74,6 +83,7 @@ int main(int argc, char** argv) {
 	string inFile("");
 	int camNum = 0;
 	bool showWindow = false;
+	bool showHSV = false;
 	
 	// Extract command line arguments
 	for(int i = 1; i < argc; i++) {
@@ -91,6 +101,7 @@ int main(int argc, char** argv) {
 			cout << "-dry: Do a dry run (no actions are sent)" << endl;
 			cout << "-file <fileName>: Get input from file <fileName> instead of camera" << endl;
 			cout << "-noanalysis: Disable stream analysis" << endl;
+			cout << "-showhsv: Show the hue, saturation and value numbers of middle pixel" << endl;
 			cout << "-win: Show a window of the input stream" << endl;
 			return 0;
 		} else if(strcmp(argv[i], "-dry") == 0) {
@@ -102,11 +113,14 @@ int main(int argc, char** argv) {
 		} else if(strcmp(argv[i], "-noanalysis") == 0) {
 			cout << "Stream analysis disabled" << endl;
 			noAnalysis = true;
+		} else if(strcmp(argv[i], "-showhsv") == 0) {
+			cout << "Showing HSV values of middle pixel" << endl;
+			showHSV = true;
 		}
 	}
 	
 	// Load configuration
-	gestureMap.readFromFile("gestureConfig");
+	gestureMap.readFromFile(configFile);
 	
 	// Create window
 	if(showWindow)
@@ -122,6 +136,9 @@ int main(int argc, char** argv) {
 		cerr << "Error: failed to open input stream." << endl;
 		return 1;
 	}
+	frameBuf.frameWidth = cap.get(CV_CAP_PROP_FRAME_WIDTH);
+	frameBuf.frameHeight = cap.get(CV_CAP_PROP_FRAME_HEIGHT);
+	cout << "Stream dimensions: " << frameBuf.frameWidth << "*" << frameBuf.frameHeight << endl;
 
 	Gesture prevGesture = Gesture::None;
 	while (1) {
@@ -136,6 +153,11 @@ int main(int argc, char** argv) {
 
 		// Convert to HSV
 		cvtColor(frame, hsvFrame, CV_BGR2HSV);
+		if(showHSV) {
+			cout << "H=" << (int)hsvFrame.at<Vec3b>(frameBuf.frameWidth/2, frameBuf.frameHeight/2).val[0];
+			cout << " S=" << (int)hsvFrame.at<Vec3b>(frameBuf.frameWidth/2, frameBuf.frameHeight/2).val[1];
+			cout << " V=" << (int)hsvFrame.at<Vec3b>(frameBuf.frameWidth/2, frameBuf.frameHeight/2).val[2] << endl;
+		}
 
 		// Go through image and find average coordinate of desired hue
 		bool sufficientSize;
@@ -145,15 +167,12 @@ int main(int argc, char** argv) {
 		else
 			frameBuf.insert(objCentroid);
 
-		// Find vector between this and last frame
-		//Vec2f motionVec = objCentroid - prevPoint;
-		//prevPoint = objCentroid;
-
 		// Analyze buffer to determine gesture
 		Gesture gesture;
 		if(frameBuf.isFilled()) {
 			// Draw the motion vector for debugging purposes
-			//line(frame, Point(objCentroid.val[0], objCentroid.val[1]), Point(motionVec.val[0]*3+objCentroid.val[0], motionVec.val[1]*3+objCentroid.val[1]), Scalar(1,1,1,1));
+			if(showWindow)
+				line(frame, Point(frameBuf.getCurrent().val[0], frameBuf.getCurrent().val[1]), Point(frameBuf.getOldest().val[0], frameBuf.getOldest().val[1]), Scalar(1,1,1,1));
 			
 			// Determine and execute gesture
 			gesture = extractGesture(frameBuf);

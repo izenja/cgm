@@ -1,5 +1,5 @@
 #pragma once
 
 enum class Gesture {
-	None, Left, Right
+	None, Left, Right, Up, Down
 };

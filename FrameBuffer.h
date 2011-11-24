@@ -1,10 +1,9 @@
 #pragma once
-
 #include <opencv2/core/core.hpp>
 
 class FrameBuffer {
 public:
-    FrameBuffer() : filled(false), index(-1) { };
+	FrameBuffer() : filled(false), index(-1) { };
 	
 	void insert(cv::Vec2f centroid);
 	void clear();
@@ -14,10 +13,11 @@ public:
 	cv::Vec2f getOldest() const;
 	
 	static const unsigned int bufferSize = 10;
+	int frameWidth;
+	int frameHeight;
 	
 private:
 	bool filled;
 	int index;
 	cv::Vec2f centroids[bufferSize];
-	//cv::Mat frames[bufferSize];
 };

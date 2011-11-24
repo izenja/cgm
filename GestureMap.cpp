@@ -19,7 +19,7 @@ bool GestureMap::readFromFile(std::string path) {
 		
 		inFile >> gestureString >> command;
 		if(gestureString.length() < 1)
-			break;
+			continue;
 		
 		Gesture gesture;
 		if(gestureString == "left")
@@ -29,6 +29,7 @@ bool GestureMap::readFromFile(std::string path) {
 		
 		mapping[gesture] = command;
 	}
+	inFile.close();
 }
 
 string GestureMap::getCommand ( Gesture gesture ) {
