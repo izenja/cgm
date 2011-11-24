@@ -7,24 +7,24 @@ using namespace std;
 
 #include "common.h"
 #include "GestureMap.h"
+#include "FrameBuffer.h"
 
 /* TODO:
+ * - add dry run and show window command line options
  */
 
-int bufIndex = 0;
-static const int bufSize = 10;
-Vec2f centroidBuf[bufSize];
-bool bufFilled = false;
-Gesture gesture;
-
-bool dryRun = false;
+bool dryRun = true;
+bool showWindow = false;
 
 void execGesture(GestureMap gestureMap, Gesture gesture) {
 	if(gesture == Gesture::None)
 		return;
 	string keyString = gestureMap.getCommand(gesture);
 	string command = "xvkbd -text " + keyString;
-	system(command.c_str());
+	cout << "Gesture: " << keyString << endl;
+	
+	if(!dryRun)
+		system(command.c_str());
 }
 
 Vec2f getObjCoords(Mat hsvFrame, bool* sufficientSize) {
@@ -51,8 +51,23 @@ Vec2f getObjCoords(Mat hsvFrame, bool* sufficientSize) {
 	return Vec2f(pointSum.x / (float)numMatched, pointSum.y / (float)numMatched);
 }
 
+Gesture extractGesture(FrameBuffer frameBuf) {
+	Gesture gesture;
+	Vec2f gestureVec = frameBuf.getCurrent() - frameBuf.getOldest();
+	if(gestureVec.val[0] > 20) {
+		gesture = Gesture::Left;
+	} else if(gestureVec.val[0] < -20) {
+		gesture = Gesture::Right;
+	} else if(gestureVec.val[0] < 5 && gestureVec.val[0] > -5) {
+		gesture = Gesture::None;
+	}
+	
+	return gesture;
+}
+
 int main(int argc, char** argv) {
 	GestureMap gestureMap;
+	FrameBuffer frameBuf;
 	
 	// Extract command line arguments
 	bool useRecording = false;
@@ -67,7 +82,8 @@ int main(int argc, char** argv) {
 	gestureMap.readFromFile("gestureConfig");
 	
 	// Create window
-	namedWindow("mainWin", 1);
+	if(showWindow)
+		namedWindow("mainWin", 1);
 
 	// Open camera
 	VideoCapture cap;
@@ -80,9 +96,7 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	Vec2f prevPoint(0, 0);
-	bool prevSufficient = false;
-	bool triggered = false;
+	Gesture prevGesture = Gesture::None;
 	while (1) {
 		Mat frame, hsvFrame;
 
@@ -99,47 +113,33 @@ int main(int argc, char** argv) {
 		// Go through image and find average coordinate of desired hue
 		bool sufficientSize;
 		Vec2f objCentroid = getObjCoords(hsvFrame, &sufficientSize);
-		centroidBuf[bufIndex] = objCentroid;
-		bufIndex++;
-		if(bufIndex >= bufSize) {
-			bufIndex -= bufSize;
-			bufFilled = true;
-		}
+		if(!sufficientSize)
+			frameBuf.clear();
+		else
+			frameBuf.insert(objCentroid);
 
-		// Find vector
-		Vec2f motionVec = objCentroid - prevPoint;
-		prevPoint = objCentroid;
+		// Find vector between this and last frame
+		//Vec2f motionVec = objCentroid - prevPoint;
+		//prevPoint = objCentroid;
 
 		// Analyze buffer to determine gesture
-		//TODO: Maybe remove 'triggered' and just use gesture
-		if(sufficientSize && prevSufficient && bufFilled) {
+		Gesture gesture;
+		if(frameBuf.isFilled()) {
 			// Draw the motion vector for debugging purposes
-			line(frame, Point(objCentroid.val[0], objCentroid.val[1]), Point(motionVec.val[0]*3+objCentroid.val[0], motionVec.val[1]*3+objCentroid.val[1]), Scalar(1,1,1,1));
+			//line(frame, Point(objCentroid.val[0], objCentroid.val[1]), Point(motionVec.val[0]*3+objCentroid.val[0], motionVec.val[1]*3+objCentroid.val[1]), Scalar(1,1,1,1));
 			
-			Vec2f gestureVec = objCentroid - centroidBuf[(bufIndex-1 + bufSize-1) % bufSize];
-			if(gestureVec.val[0] > 20 && !triggered) {
-				//cout << "Gesture: right" << endl;
-				gesture = Gesture::Left;
-				triggered = true;
-			} else if(gestureVec.val[0] < -20 && !triggered) {
-				//cout << "Gesture: left" << endl;
-				gesture = Gesture::Right;
-				triggered = true;
-			} else if(gestureVec.val[0] < 5 && gestureVec.val[0] > -5 && triggered) {
-				triggered = false;
+			// Determine and execute gesture
+			gesture = extractGesture(frameBuf);
+			if(gesture != prevGesture && gesture != Gesture::None) {
+				execGesture(gestureMap, gesture);
 			}
-		} else {
-			triggered = false;
 		}
-		prevSufficient = sufficientSize;
-
-		// Execute gesture command
-		execGesture(gestureMap, gesture);
+		prevGesture = gesture;
 
 		// Display frame
-		gesture = Gesture::None;
-		imshow("mainWin", frame);
-		if (waitKey(25) >= 0)
+		if(showWindow)
+			imshow("mainWin", frame);
+		if (waitKey(1) >= 0)
 			break;
 	}
 
