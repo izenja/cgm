@@ -32,6 +32,6 @@ bool GestureMap::readFromFile(std::string path) {
 	inFile.close();
 }
 
-string GestureMap::getCommand ( Gesture gesture ) {
-	return mapping[gesture];
+string GestureMap::getCommand (Gesture gesture) const {
+	return mapping.find(gesture)->second;
 }

@@ -11,7 +11,7 @@ public:
     GestureMap();
 	bool readFromFile(std::string file);
 	
-	std::string getCommand(Gesture gesture);
+	std::string getCommand(Gesture gesture) const;
 	
 private:
 	map<Gesture, std::string> mapping;

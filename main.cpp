@@ -25,7 +25,7 @@ const int horizVelMin = 80;
 const int resetVelMax = 40;
 const int objMinPixels = 1250;
 
-void execGesture(GestureMap gestureMap, Gesture gesture) {
+void execGesture(const GestureMap &gestureMap, Gesture gesture) {
 	if(gesture == Gesture::None)
 		return;
 	string keyString = gestureMap.getCommand(gesture);
@@ -36,14 +36,14 @@ void execGesture(GestureMap gestureMap, Gesture gesture) {
 		system(command.c_str());
 }
 
-Vec2f getObjCoords(Mat hsvFrame, bool* sufficientSize) {
+Vec2f getObjCoords(const Mat &hsvFrame, bool* sufficientSize) {
 	if(noAnalysis)
 		return Vec2f();
 
 	Point pointSum;
 	int numMatched = 0;
 	
-	for (MatIterator_<Vec3b> it = hsvFrame.begin<Vec3b>(); it != hsvFrame.end<Vec3b>(); it++) {
+	for (MatConstIterator_<Vec3b> it = hsvFrame.begin<Vec3b>(); it != hsvFrame.end<Vec3b>(); it++) {
 		int hue = (*it)[0];
 		int saturation = (*it)[1];
 		int value = (*it)[2];
@@ -63,7 +63,7 @@ Vec2f getObjCoords(Mat hsvFrame, bool* sufficientSize) {
 	return Vec2f(pointSum.x / (float)numMatched, pointSum.y / (float)numMatched);
 }
 
-Gesture extractGesture(FrameBuffer frameBuf) {
+Gesture extractGesture(const FrameBuffer &frameBuf) {
 	Gesture gesture;
 	Vec2f gestureVec = frameBuf.getCurrent() - frameBuf.getOldest();
 	if(gestureVec.val[0] > horizVelMin) {
