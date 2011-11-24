@@ -14,6 +14,7 @@ using namespace std;
  */
 
 bool dryRun = false;
+bool noAnalysis = false;
 
 void execGesture(GestureMap gestureMap, Gesture gesture) {
 	if(gesture == Gesture::None)
@@ -27,6 +28,9 @@ void execGesture(GestureMap gestureMap, Gesture gesture) {
 }
 
 Vec2f getObjCoords(Mat hsvFrame, bool* sufficientSize) {
+	if(noAnalysis)
+		return Vec2f();
+
 	Point pointSum;
 	int numMatched = 0;
 	
@@ -86,6 +90,7 @@ int main(int argc, char** argv) {
 			cout << "-cam <number>: Use camera #<number>; default is 0" << endl;
 			cout << "-dry: Do a dry run (no actions are sent)" << endl;
 			cout << "-file <fileName>: Get input from file <fileName> instead of camera" << endl;
+			cout << "-noanalysis: Disable stream analysis" << endl;
 			cout << "-win: Show a window of the input stream" << endl;
 			return 0;
 		} else if(strcmp(argv[i], "-dry") == 0) {
@@ -94,6 +99,9 @@ int main(int argc, char** argv) {
 		} else if(strcmp(argv[i], "-win") == 0) {
 			cout << "Input stream window is shown" << endl;
 			showWindow = true;
+		} else if(strcmp(argv[i], "-noanalysis") == 0) {
+			cout << "Stream analysis disabled" << endl;
+			noAnalysis = true;
 		}
 	}
 	
