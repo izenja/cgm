@@ -14,7 +14,6 @@ using namespace std;
  */
 
 bool dryRun = true;
-bool showWindow = false;
 
 void execGesture(GestureMap gestureMap, Gesture gesture) {
 	if(gesture == Gesture::None)
@@ -68,13 +67,26 @@ Gesture extractGesture(FrameBuffer frameBuf) {
 int main(int argc, char** argv) {
 	GestureMap gestureMap;
 	FrameBuffer frameBuf;
+	string inFile("");
+	int camNum = 0;
+	bool showWindow = false;
 	
 	// Extract command line arguments
-	bool useRecording = false;
-	if(argc > 1) {
-		if(!strcmp(argv[1], "-r")) {
-			useRecording = true;
+	for(int i = 1; i < argc; i++) {
+		if(strcmp(argv[i], "-file") == 0) {
+			inFile = argv[i+1];
+			cout << "Using input file: " << inFile << endl;
+			i++;
+		} else if(strcmp(argv[i], "-cam") == 0) {
+			camNum = atoi(argv[i+1]);
+			cout << "Using camera #" << camNum << endl;
+			i++;
+		} else if(strcmp(argv[i], "-dry") == 0) {
+			cout << "Dry run enabled (no actions are sent)" << endl;
 			dryRun = true;
+		} else if(strcmp(argv[i], "-win") == 0) {
+			cout << "Input stream window is shown" << endl;
+			showWindow = true;
 		}
 	}
 	
@@ -87,10 +99,10 @@ int main(int argc, char** argv) {
 
 	// Open camera
 	VideoCapture cap;
-	if(useRecording)
-		cap.open("vid.mp4");
+	if(inFile.length() > 0)
+		cap.open(inFile.c_str());
 	else
-		cap.open(0);
+		cap.open(camNum);
 	if (!cap.isOpened()) {
 		cerr << "Error: failed to open input stream." << endl;
 		return 1;
@@ -137,10 +149,11 @@ int main(int argc, char** argv) {
 		prevGesture = gesture;
 
 		// Display frame
-		if(showWindow)
+		if(showWindow) {
 			imshow("mainWin", frame);
-		if (waitKey(1) >= 0)
-			break;
+			if (waitKey(1) >= 0)
+				break;
+		}
 	}
 
 	return 0;
