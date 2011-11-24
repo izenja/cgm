@@ -23,7 +23,7 @@ void execGesture(GestureMap gestureMap, Gesture gesture) {
 	if(gesture == Gesture::None)
 		return;
 	string keyString = gestureMap.getCommand(gesture);
-	cout << command << endl;
+	string command = "xvkbd -text " + keyString;
 	system(command.c_str());
 }
 
