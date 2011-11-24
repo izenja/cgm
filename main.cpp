@@ -81,6 +81,13 @@ int main(int argc, char** argv) {
 			camNum = atoi(argv[i+1]);
 			cout << "Using camera #" << camNum << endl;
 			i++;
+		} else if(strcmp(argv[i], "-help") == 0) {
+			cout << "Command line arguments:" << endl;
+			cout << "-cam <number>: Use camera #<number>; default is 0" << endl;
+			cout << "-dry: Do a dry run (no actions are sent)" << endl;
+			cout << "-file <fileName>: Get input from file <fileName> instead of camera" << endl;
+			cout << "-win: Show a window of the input stream" << endl;
+			return 0;
 		} else if(strcmp(argv[i], "-dry") == 0) {
 			cout << "Dry run enabled (no actions are sent)" << endl;
 			dryRun = true;
