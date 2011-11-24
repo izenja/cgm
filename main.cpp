@@ -13,7 +13,7 @@ using namespace std;
  * - add dry run and show window command line options
  */
 
-bool dryRun = true;
+bool dryRun = false;
 
 void execGesture(GestureMap gestureMap, Gesture gesture) {
 	if(gesture == Gesture::None)
