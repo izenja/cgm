@@ -1,16 +1,15 @@
 #include <iostream>
+#include <cstdlib>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 using namespace cv;
 using namespace std;
 
-/* TODO:
- * Fix point from jumping when object goes out of frame
- * Tune object detection */
+#include "common.h"
+#include "GestureMap.h"
 
-enum class Gesture {
-	None, Left, Right
-};
+/* TODO:
+ */
 
 int bufIndex = 0;
 static const int bufSize = 10;
@@ -20,15 +19,12 @@ Gesture gesture;
 
 bool dryRun = false;
 
-void execGesture(Gesture gesture) {
-	switch(gesture) {
-		case Gesture::Left:
-			cout << "Gesture: left" << endl;
-			break;
-		case Gesture::Right:
-			cout << "Gesture: right" << endl;
-			break;
-	}
+void execGesture(GestureMap gestureMap, Gesture gesture) {
+	if(gesture == Gesture::None)
+		return;
+	string keyString = gestureMap.getCommand(gesture);
+	cout << command << endl;
+	system(command.c_str());
 }
 
 Vec2f getObjCoords(Mat hsvFrame, bool* sufficientSize) {
@@ -56,6 +52,8 @@ Vec2f getObjCoords(Mat hsvFrame, bool* sufficientSize) {
 }
 
 int main(int argc, char** argv) {
+	GestureMap gestureMap;
+	
 	// Extract command line arguments
 	bool useRecording = false;
 	if(argc > 1) {
@@ -64,6 +62,9 @@ int main(int argc, char** argv) {
 			dryRun = true;
 		}
 	}
+	
+	// Load configuration
+	gestureMap.readFromFile("gestureConfig");
 	
 	// Create window
 	namedWindow("mainWin", 1);
@@ -133,7 +134,7 @@ int main(int argc, char** argv) {
 		prevSufficient = sufficientSize;
 
 		// Execute gesture command
-		execGesture(gesture);
+		execGesture(gestureMap, gesture);
 
 		// Display frame
 		gesture = Gesture::None;

@@ -3,13 +3,15 @@ LFLAGS=-O2 -lopencv_core -lopencv_highgui
 
 all: cgm
 
-main.o: main.cpp
+main.o: main.cpp common.h
 	gcc ${CFLAGS} -c main.cpp
+GestureMap.o: GestureMap.cpp GestureMap.h common.h
+	gcc ${CFLAGS} -c GestureMap.cpp
 
-cgm: main.o
-	gcc ${LFLAGS} main.o -o cgm
+cgm: GestureMap.o main.o
+	gcc ${LFLAGS} main.o GestureMap.o -o cgm
 
 
 clean:
-	rm -f main.o cgm
+	rm -f *.o cgm
 
