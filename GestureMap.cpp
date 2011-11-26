@@ -35,3 +35,20 @@ bool GestureMap::readFromFile(std::string path) {
 string GestureMap::getCommand (Gesture gesture) const {
 	return mapping.find(gesture)->second;
 }
+
+string GestureMap::gestureToString(Gesture gesture) {
+	switch(gesture) {
+		case Gesture::Left:
+			return string("Left"); break;
+		case Gesture::Right:
+			return string("Right"); break;
+		case Gesture::Up:
+			return string("Up"); break;
+		case Gesture::Down:
+			return string("Down"); break;
+		case Gesture::None:
+			return string("None"); break;
+		default:
+			return string("Unknown"); break;
+	}
+}

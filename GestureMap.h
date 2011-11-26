@@ -12,6 +12,7 @@ public:
 	bool readFromFile(std::string file);
 	
 	std::string getCommand(Gesture gesture) const;
+	static std::string gestureToString(Gesture gesture);
 	
 private:
 	map<Gesture, std::string> mapping;

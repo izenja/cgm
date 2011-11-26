@@ -10,10 +10,18 @@ using namespace std;
 #include "FrameBuffer.h"
 
 /* TODO:
+ * - tune
+ * - fix detection always detecting left gesture
+ * - scale motion for glove size
+ * - add up/down gestures
+ * - add command notification
+ * - make evaluation program
+ * - do evaluations
  */
 
 bool dryRun = false;
 bool noAnalysis = false;
+bool sysNotify = true;
 const string configFile("gestureConfig");
 
 // Tuning parameters
@@ -30,7 +38,10 @@ void execGesture(const GestureMap &gestureMap, Gesture gesture) {
 		return;
 	string keyString = gestureMap.getCommand(gesture);
 	string command = "xvkbd -text " + keyString;
-	cout << "Gesture: " << keyString << endl;
+	
+	cout << "Gesture " << GestureMap::gestureToString(gesture) << ": " << keyString << endl;
+	if(sysNotify)
+		system((string("notify-send \"CGM Gesture\" \"") + GestureMap::gestureToString(gesture) + " gesture detected.\"").c_str());
 	
 	if(!dryRun)
 		system(command.c_str());
@@ -121,6 +132,9 @@ int main(int argc, char** argv) {
 		} else if(strcmp(argv[i], "-showhsv") == 0) {
 			cout << "Showing HSV values of middle pixel" << endl;
 			showHSV = true;
+		} else if(strcmp(argv[i], "-notify") == 0) {
+			cout << "System notifications enabled" << endl;
+			sysNotify = true;
 		}
 	}
 	
