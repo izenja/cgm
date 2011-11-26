@@ -21,6 +21,5 @@ cv::Vec2f FrameBuffer::getCurrent() const {
 }
 
 cv::Vec2f FrameBuffer::getOldest() const {
-	//return (index == bufferSize-1) ? centroids[0] : centroids[index+1];
-	return centroids[(index-1 + bufferSize-1) % bufferSize];
+	return (index == bufferSize-1) ? centroids[0] : centroids[index+1];
 }

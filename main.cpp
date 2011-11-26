@@ -11,10 +11,9 @@ using namespace std;
 
 /* TODO:
  * - tune
- * - fix detection always detecting left gesture
- * - scale motion for glove size
+ * - possibly consider using image processing to improve object detection (after demo)
+ * - scale motion for glove size (after demo)
  * - add up/down gestures
- * - add command notification
  * - make evaluation program
  * - do evaluations
  */
@@ -29,9 +28,9 @@ int hueMin = 2;
 int hueMax = 17;
 int satMin = 160;
 int valMin = 80;
-const int horizVelMin = 80;
+const int velMin = 120;
 //const int resetVelMax = 40;
-const int objMinPixels = 2000;
+const int objMinPixels = 10000;
 
 void execGesture(const GestureMap &gestureMap, Gesture gesture) {
 	if(gesture == Gesture::None)
@@ -82,13 +81,21 @@ Vec2f getObjCoords(const Mat &hsvFrame, const bool createDesaturated, Mat& outFr
 Gesture extractGesture(const FrameBuffer &frameBuf) {
 	Gesture gesture = Gesture::None;
 	Vec2f gestureVec = frameBuf.getCurrent() - frameBuf.getOldest();
-	if(gestureVec.val[0] > horizVelMin) {
-		gesture = Gesture::Left;
-	} else if(gestureVec.val[0] < -horizVelMin) {
-		gesture = Gesture::Right;
-	} //else if(gestureVec.val[0] < resetVelMax && gestureVec.val[0] > -resetVelMax) {
-		//gesture = Gesture::None;
-	//}
+	float mag = cv::norm(gestureVec);
+	float angle = atan2(gestureVec[1], gestureVec[0]);
+	
+	// Trigger if magnitude of movement is high enough
+	if(mag > velMin) {
+		// Decide gesture based on angle
+		if(angle < pi/6.0 && angle > -(pi/6.0))
+			gesture = Gesture::Left;
+		else if(angle > pi*5.0/6.0 || angle < -(pi*5.0/6.0))
+			gesture = Gesture::Right;
+		else if(angle < -(pi/3.0) && angle > -(pi*2.0/3.0))
+			gesture = Gesture::Up;
+		else if(angle > pi/3.0 && angle < pi*2.0/3.0)
+			gesture = Gesture::Down;
+	}
 	
 	return gesture;
 }

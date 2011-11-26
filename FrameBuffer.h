@@ -12,7 +12,7 @@ public:
 	cv::Vec2f getCurrent() const;
 	cv::Vec2f getOldest() const;
 	
-	static const unsigned int bufferSize = 10;
+	static const unsigned int bufferSize = 3;
 	int frameWidth;
 	int frameHeight;
 	

@@ -26,6 +26,10 @@ bool GestureMap::readFromFile(std::string path) {
 			gesture = Gesture::Left;
 		else if(gestureString == "right")
 			gesture = Gesture::Right;
+		else if(gestureString == "up")
+			gesture = Gesture::Up;
+		else if(gestureString == "down")
+			gesture = Gesture::Down;
 		
 		mapping[gesture] = command;
 	}
