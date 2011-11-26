@@ -80,15 +80,15 @@ Vec2f getObjCoords(const Mat &hsvFrame, const bool createDesaturated, Mat*& outF
 }
 
 Gesture extractGesture(const FrameBuffer &frameBuf) {
-	Gesture gesture;
+	Gesture gesture = Gesture::None;
 	Vec2f gestureVec = frameBuf.getCurrent() - frameBuf.getOldest();
 	if(gestureVec.val[0] > horizVelMin) {
 		gesture = Gesture::Left;
 	} else if(gestureVec.val[0] < -horizVelMin) {
 		gesture = Gesture::Right;
-	} else if(gestureVec.val[0] < resetVelMax && gestureVec.val[0] > -resetVelMax) {
-		gesture = Gesture::None;
-	}
+	} //else if(gestureVec.val[0] < resetVelMax && gestureVec.val[0] > -resetVelMax) {
+		//gesture = Gesture::None;
+	//}
 	
 	return gesture;
 }
@@ -187,7 +187,7 @@ int main(int argc, char** argv) {
 			frameBuf.insert(objCentroid);
 
 		// Analyze buffer to determine gesture
-		Gesture gesture;
+		Gesture gesture = Gesture::None;
 		if(frameBuf.isFilled()) {
 			// Determine and execute gesture
 			gesture = extractGesture(frameBuf);

@@ -29,7 +29,9 @@ bool GestureMap::readFromFile(std::string path) {
 		
 		mapping[gesture] = command;
 	}
+
 	inFile.close();
+	return true;
 }
 
 string GestureMap::getCommand (Gesture gesture) const {

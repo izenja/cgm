@@ -2,7 +2,7 @@
 
 void FrameBuffer::insert(cv::Vec2f centroid) {
 	index++;
-	if(index >= bufferSize) {
+	if(index >= (int)bufferSize) {
 		index = 0;
 		filled = true;
 	}
