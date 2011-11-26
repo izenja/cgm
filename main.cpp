@@ -21,7 +21,7 @@ using namespace std;
 
 bool dryRun = false;
 bool noAnalysis = false;
-bool sysNotify = true;
+bool sysNotify = false;
 const string configFile("gestureConfig");
 
 // Tuning parameters
@@ -47,11 +47,11 @@ void execGesture(const GestureMap &gestureMap, Gesture gesture) {
 		system(command.c_str());
 }
 
-Vec2f getObjCoords(const Mat &hsvFrame, const bool createDesaturated, Mat*& outFrame, bool* sufficientSize) {
+Vec2f getObjCoords(const Mat &hsvFrame, const bool createDesaturated, Mat& outFrame, bool* sufficientSize) {
 	if(noAnalysis)
 		return Vec2f();
 	if(createDesaturated)
-		outFrame = new Mat(hsvFrame);
+		outFrame = hsvFrame;
 
 	Point pointSum;
 	int numMatched = 0;
@@ -66,7 +66,7 @@ Vec2f getObjCoords(const Mat &hsvFrame, const bool createDesaturated, Mat*& outF
 			numMatched++;
 		} else if(createDesaturated) {
 			// Modify output frame to show all non-object pixels in greyscale
-			outFrame->at<Vec3b>(it.pos())[1] = 0;
+			outFrame.at<Vec3b>(it.pos())[1] = 0;
 		}
 	}
 	
@@ -161,7 +161,7 @@ int main(int argc, char** argv) {
 
 	Gesture prevGesture = Gesture::None;
 	while (1) {
-		Mat frame, hsvFrame, *desatFrame;
+		Mat frame, hsvFrame, desatFrame;
 
 		// Grab a frame
 		cap >> frame;
@@ -199,7 +199,7 @@ int main(int argc, char** argv) {
 
 		// Display frame
 		if(showWindow) {
-			cvtColor(*desatFrame, frame, CV_HSV2BGR);
+			cvtColor(desatFrame, frame, CV_HSV2BGR);
 			
 			// Draw the motion vector for debugging purposes
 			line(frame, Point(frameBuf.getCurrent().val[0], frameBuf.getCurrent().val[1]), Point(frameBuf.getOldest().val[0], frameBuf.getOldest().val[1]), Scalar(1,1,1,1));
