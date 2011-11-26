@@ -25,13 +25,13 @@ bool sysNotify = false;
 const string configFile("gestureConfig");
 
 // Tuning parameters
-const int hueMin = 5;
-const int hueMax = 20;
-const int satMin = 150;
-const int valMin = 75;
+int hueMin = 2;
+int hueMax = 17;
+int satMin = 160;
+int valMin = 80;
 const int horizVelMin = 80;
-const int resetVelMax = 40;
-const int objMinPixels = 1250;
+//const int resetVelMax = 40;
+const int objMinPixels = 2000;
 
 void execGesture(const GestureMap &gestureMap, Gesture gesture) {
 	if(gesture == Gesture::None)
@@ -189,6 +189,9 @@ int main(int argc, char** argv) {
 		// Analyze buffer to determine gesture
 		Gesture gesture = Gesture::None;
 		if(frameBuf.isFilled()) {
+			// Draw the motion vector for debugging purposes
+			line(desatFrame, Point(frameBuf.getCurrent().val[0], frameBuf.getCurrent().val[1]), Point(frameBuf.getOldest().val[0], frameBuf.getOldest().val[1]), Scalar(1,1,1,1));
+			
 			// Determine and execute gesture
 			gesture = extractGesture(frameBuf);
 			if(gesture != prevGesture && gesture != Gesture::None) {
@@ -199,14 +202,41 @@ int main(int argc, char** argv) {
 
 		// Display frame
 		if(showWindow) {
-			cvtColor(desatFrame, frame, CV_HSV2BGR);
-			
-			// Draw the motion vector for debugging purposes
-			line(frame, Point(frameBuf.getCurrent().val[0], frameBuf.getCurrent().val[1]), Point(frameBuf.getOldest().val[0], frameBuf.getOldest().val[1]), Scalar(1,1,1,1));
-			
+			cvtColor(desatFrame, frame, CV_HSV2BGR);			
 			imshow("mainWin", frame);
-			if (waitKey(1) >= 0)
+			
+			// Tuning controls
+			char key = waitKey(1);
+			switch(key) {
+			case 'w':
+				satMin++;
+				cout << "Saturation: " << satMin << endl;
 				break;
+			case 's':
+				satMin--;
+				cout << "Saturation: " << satMin << endl;
+				break;
+			case 'a':
+				valMin--;
+				cout << "Value: " << valMin << endl;
+				break;
+			case 'd':
+				valMin++;
+				cout << "Value: " << valMin << endl;
+				break;
+			case 'e':
+				hueMin++;
+				hueMax++;
+				cout << "Hue: " << hueMin << "," << hueMax << endl;
+				break;
+			case 'c':
+				hueMin--;
+				hueMax--;
+				cout << "Hue: " << hueMin << "," << hueMax << endl;
+				break;
+			case 'q':
+				return 0;
+			}
 		}
 	}
 
