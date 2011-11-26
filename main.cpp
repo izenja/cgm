@@ -19,7 +19,7 @@ const string configFile("gestureConfig");
 // Tuning parameters
 const int hueMin = 5;
 const int hueMax = 20;
-const int satMin = 200;
+const int satMin = 150;
 const int valMin = 75;
 const int horizVelMin = 80;
 const int resetVelMax = 40;
@@ -36,9 +36,11 @@ void execGesture(const GestureMap &gestureMap, Gesture gesture) {
 		system(command.c_str());
 }
 
-Vec2f getObjCoords(const Mat &hsvFrame, bool* sufficientSize) {
+Vec2f getObjCoords(const Mat &hsvFrame, const bool createDesaturated, Mat*& outFrame, bool* sufficientSize) {
 	if(noAnalysis)
 		return Vec2f();
+	if(createDesaturated)
+		outFrame = new Mat(hsvFrame);
 
 	Point pointSum;
 	int numMatched = 0;
@@ -51,6 +53,9 @@ Vec2f getObjCoords(const Mat &hsvFrame, bool* sufficientSize) {
 			// Pixel is within desired hue range and minimum saturation
 			pointSum += it.pos();
 			numMatched++;
+		} else if(createDesaturated) {
+			// Modify output frame to show all non-object pixels in greyscale
+			outFrame->at<Vec3b>(it.pos())[1] = 0;
 		}
 	}
 	
@@ -142,7 +147,7 @@ int main(int argc, char** argv) {
 
 	Gesture prevGesture = Gesture::None;
 	while (1) {
-		Mat frame, hsvFrame;
+		Mat frame, hsvFrame, *desatFrame;
 
 		// Grab a frame
 		cap >> frame;
@@ -161,7 +166,7 @@ int main(int argc, char** argv) {
 
 		// Go through image and find average coordinate of desired hue
 		bool sufficientSize;
-		Vec2f objCentroid = getObjCoords(hsvFrame, &sufficientSize);
+		Vec2f objCentroid = getObjCoords(hsvFrame, true, desatFrame, &sufficientSize);
 		if(!sufficientSize)
 			frameBuf.clear();
 		else
@@ -170,10 +175,6 @@ int main(int argc, char** argv) {
 		// Analyze buffer to determine gesture
 		Gesture gesture;
 		if(frameBuf.isFilled()) {
-			// Draw the motion vector for debugging purposes
-			if(showWindow)
-				line(frame, Point(frameBuf.getCurrent().val[0], frameBuf.getCurrent().val[1]), Point(frameBuf.getOldest().val[0], frameBuf.getOldest().val[1]), Scalar(1,1,1,1));
-			
 			// Determine and execute gesture
 			gesture = extractGesture(frameBuf);
 			if(gesture != prevGesture && gesture != Gesture::None) {
@@ -184,6 +185,11 @@ int main(int argc, char** argv) {
 
 		// Display frame
 		if(showWindow) {
+			cvtColor(*desatFrame, frame, CV_HSV2BGR);
+			
+			// Draw the motion vector for debugging purposes
+			line(frame, Point(frameBuf.getCurrent().val[0], frameBuf.getCurrent().val[1]), Point(frameBuf.getOldest().val[0], frameBuf.getOldest().val[1]), Scalar(1,1,1,1));
+			
 			imshow("mainWin", frame);
 			if (waitKey(1) >= 0)
 				break;
