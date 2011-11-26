@@ -13,7 +13,6 @@ using namespace std;
  * - tune
  * - possibly consider using image processing to improve object detection (after demo)
  * - scale motion for glove size (after demo)
- * - add up/down gestures
  * - make evaluation program
  * - do evaluations
  */
@@ -29,7 +28,6 @@ int hueMax = 17;
 int satMin = 160;
 int valMin = 80;
 const int velMin = 120;
-//const int resetVelMax = 40;
 const int objMinPixels = 10000;
 
 void execGesture(const GestureMap &gestureMap, Gesture gesture) {
