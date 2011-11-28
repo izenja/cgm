@@ -34,7 +34,7 @@ void execGesture(const GestureMap &gestureMap, Gesture gesture) {
 	if(gesture == Gesture::None)
 		return;
 	string keyString = gestureMap.getCommand(gesture);
-	string command = "xvkbd -text " + keyString;
+	string command = "xvkbd -no-jump-pointer -text " + keyString;
 	
 	cout << "Gesture " << GestureMap::gestureToString(gesture) << ": " << keyString << endl;
 	if(sysNotify)
