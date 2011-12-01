@@ -23,12 +23,14 @@ bool sysNotify = false;
 const string configFile("gestureConfig");
 
 // Tuning parameters
-int hueMin = 2;
-int hueMax = 17;
-int satMin = 160;
-int valMin = 80;
-const int velMin = 120;
-const int objMinPixels = 10000;
+//int hueMin = 2;
+//int hueMax = 17;
+int hueMin = 77;
+int hueMax = 122;
+int satMin = 45;
+int valMin = 100;
+const int velMin = 160;
+const int objMinPixels = 6000;
 
 void execGesture(const GestureMap &gestureMap, Gesture gesture) {
 	if(gesture == Gesture::None)
