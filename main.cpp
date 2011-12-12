@@ -27,10 +27,10 @@ const string configFile("gestureConfig");
 //int hueMax = 17;
 int hueMin = 77;
 int hueMax = 122;
-int satMin = 45;
+int satMin = 80;
 int valMin = 100;
-const int velMin = 160;
-const int objMinPixels = 6000;
+const int velMin = 150;
+const int objMinPixels = 8000;
 
 void execGesture(const GestureMap &gestureMap, Gesture gesture) {
 	if(gesture == Gesture::None)
